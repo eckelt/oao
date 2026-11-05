@@ -1,6 +1,8 @@
-# OAO – Open Architecture Overview
+# OAO – Open Agentic Overview
 
 Specification, as of 2026-11-05.
+
+*OAO stands for **Open Agentic Overview** and is pronounced like “WOW!”.*
 
 **Spec in, overview and delta out – for humans and agents.**
 
