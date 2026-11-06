@@ -16,11 +16,22 @@ When coding agents write most of the code, nobody reads all of it anymore. Under
 
 ## Status
 
-- **Spec: public.** See [SPEC.md](SPEC.md).
-- **Code: follows.** The public tool will be written in TypeScript on Bun.
+- **Spec: public.** See [SPEC.md](SPEC.md), with draft JSON Schemas in [schema/](schema/) and examples in [examples/](examples/).
+- **Code: follows.** The language is not fixed yet. The spec and its contracts are binding, not the implementation language.
 - A private prototype (Python) is in daily use for the author's own landscape of a few small web products. That instance stays private.
 
 SPEC.md marks for every part whether it is implemented in the prototype or planned for the public tool.
+
+## Start without the tool
+
+You do not need OAO to get most of the benefit. Four steps, in any repo:
+
+1. **Main spec into the repo.** Only the *what*: observable behaviour, as requirements and scenarios. The [OpenSpec](https://github.com/Fission-AI/OpenSpec) layout works well; see [examples/openspec/](examples/openspec/).
+2. **Changes only as delta specs.** Review the delta, not the code. The delta is merged into the main spec when the change lands.
+3. **Keep the *how* separate.** A manifest per repo and decision records (ADRs), drawn as an overview. A Mermaid diagram is enough to start; [examples/manifest.example.json](examples/manifest.example.json) shows what a manifest holds.
+4. **Test the spec with a rebuild.** Let an agent build the thing from the spec alone in an empty repo. What it gets wrong shows what your spec is missing.
+
+Build the tool you need. OAO is one example.
 
 ## How the author works with it
 
@@ -28,7 +39,7 @@ SPEC.md marks for every part whether it is implemented in the prototype or plann
 
 ## Background
 
-The idea was presented at code.talks 2026 (Hamburg, 5 November 2026) in the talk “Architecture Overview gegen Comprehension Debt” (architecture overview against comprehension debt). Several listeners asked for the spec; this repository is the answer.
+The idea was presented at code.talks 2026 (Hamburg, 5 November 2026) in the talk “Architecture Overview gegen Comprehension Debt” (architecture overview against comprehension debt). Several listeners asked for the spec; this repository is the answer. Slides and write-up: [ecke.lt/codetalks](https://ecke.lt/codetalks).
 
 ## How this spec was written
 

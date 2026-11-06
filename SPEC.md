@@ -39,7 +39,7 @@ There are two implementations:
 | | Prototype | Public tool |
 |---|---|---|
 | Where | private working repository of the owner | this repository |
-| Language | Python scripts, static explorer page in JavaScript | TypeScript on Bun (planned) |
+| Language | Python scripts, static explorer page in JavaScript | open |
 | State | in daily use since mid-October 2026 | not started; this spec comes first |
 
 The prototype runs for the owner's own landscape: a handful of small web products, the tool itself, and one system that keeps its architecture in its own format. A private instance of the viewer runs on the web behind a login.
@@ -128,6 +128,8 @@ Further rules:
 
 Each document has a JSON Schema in strict mode (`additionalProperties: false`). A manifest that contains edges or contracts fails validation: those are derived. [P→T]
 
+Draft schemas for the public tool are in [`schema/`](schema/), with matching examples in [`examples/`](examples/). They use the English names of this spec and leave out fields the prototype still carries for its own operations (for example evidence lists and deployment notes). The prototype's own schemas are not published.
+
 The prototype uses JSON for manifests and YAML for the landscape file. The public tool keeps JSON for manifests (agents write it reliably and the schema checks it directly) and MAY accept YAML for both.
 
 ### 5.2 Elements
@@ -207,14 +209,15 @@ capabilities:
 
 Specs follow the OpenSpec layout: one folder per capability, requirements with **SHALL**, scenarios with **WHEN/THEN**. [P]
 
-- Each scenario has a stable id. Duplicate ids are drift.
+- Each scenario has a stable id `<capability>/<requirement-slug>/<scenario-slug>`, built from the titles alone: lower case, every run of characters other than `a-z` and `0-9` becomes one `-`, no `-` at the ends. Example: *Requirement: Place an order* / *Scenario: Empty cart* in `checkout` → `checkout/place-an-order/empty-cart`. Renaming a title changes the id. Duplicate ids are drift.
+- A test proves a scenario by carrying the text `spec:<id>` in its name, docstring or a comment directly above it; a Gherkin scenario carries the tag `@spec:<id>`. See [`examples/`](examples/).
 - A spec MAY carry a header `Status: reconstructed` (describes today's behaviour, not yet accepted) before its purpose. Without the header it counts as `accepted`.
 - The generator computes a **coverage stage** for every system, container and component. Nobody declares it. Without inheritance downwards:
 
 | Stage | Meaning |
 |---|---|
 | `none` | no own spec, no evidence |
-| `derived` | no own spec, but evidence (code locations) |
+| `derived` | no own spec, but evidence derived from code (for example tests carrying a scenario id); never maintained by hand |
 | `reconstructed` | own spec(s), at least one reconstructed |
 | `accepted` | all own specs accepted |
 | `evidenced` | all own specs accepted, and every scenario has a test |
@@ -382,6 +385,28 @@ The delta is the difference between the target aggregate of a change and the cur
 - Decisions and capabilities are compared the same way. A capability change also shows the change of its signal (for example "signal gap → specified").
 - **Drift first:** new and removed drift come before nodes, edges, decisions and capabilities.
 - The delta exists as text (for agents and terminals) and as JSON (for tools and the explorer), with a closing sum line.
+- Edge ids contain the contract (`<from>=><to>:<contractRef>`). A new contract version therefore shows as one edge removed and one added, not as a changed edge.
+
+Example: the shop from 5.8 moves to `shop:orders@2` and gets a notifier that mails status changes. Its new scenario has no test yet.
+
+```
+Delta change/order-status-mail against main
+new drift
+  ! warning scenario-without-test  shop/notifier
+nodes
+  + shop/notifier
+  ~ shop/api  interfaces +shop:orders@2 -shop:orders@1
+  ~ shop/web  interfaces +shop:orders@2 -shop:orders@1
+edges
+  + shop/notifier=>external/mail:mail:smtp@1  calls
+  + shop/web=>shop/api:shop:orders@2  calls
+  - shop/web=>shop/api:shop:orders@1  calls
+decisions
+  + shop:2026-11-06-order-status-mail  Status mails through a separate notifier (accepted)
+sum: nodes +1 ~2 -0, edges +2 ~0 -1, drift +1 -0, decisions +1 ~0 -0
+```
+
+This is the prototype's output for that case, with its German labels translated.
 
 ### 8.4 Stale base
 
@@ -513,9 +538,9 @@ Permissions, expiry and last use are fetched live and shown only to the owner. D
 - Drivers call an implementation at its boundary: the aggregator (repos and landscape in, aggregate out), the delta tool (command line), later the workbench (HTTP) and the explorer (browser). [P]
 - A foreign implementation is attached through a call template and a list of its abilities. A scenario that needs an ability the implementation lacks is skipped with a reason, never silently. [P]
 - The generator counts tests and feature files that carry a scenario id as evidence (section 5.6). Links from scenario to test are always derived, never maintained. [P]
-- **Rebuild test:** an agent rebuilds the tool from the specs alone, and the same scenarios run against the rebuild. This checks whether the specs are complete. A first run reproduced the aggregator output field by field; the run for the explorer is not yet conclusive. [P, experimental]
+- **Rebuild test:** an agent rebuilds the tool from the specs alone, and the same scenarios run against the rebuild. This checks whether the specs are complete. In the first of six runs so far, the rebuilt aggregator matched the original field by field. No explorer run is conclusive yet; the later runs mostly found places where the specs were still ambiguous, and those led to fixes in the spec. [P, experimental]
 
-The public tool runs the same Gherkin files with Cucumber.js. [T]
+The public tool runs the same Gherkin files with a standard Cucumber runner. [T]
 
 ---
 
@@ -532,9 +557,9 @@ The public tool runs the same Gherkin files with Cucumber.js. [T]
 
 ## 14. Implementation status
 
-| Part | Prototype (Python) | Public tool (TypeScript/Bun) |
+| Part | Prototype (Python) | Public tool |
 |---|---|---|
-| schemas: manifest, landscape, aggregate | done | carry over |
+| schemas: manifest, landscape, aggregate | done | manifest and landscape drafted in `schema/`; aggregate planned |
 | aggregator with relationships, drift, coverage, capabilities, flows, decisions | done | planned |
 | target aggregates per change and variant from change branches | done | planned |
 | delta tool (text, JSON) | done | planned |
@@ -542,7 +567,7 @@ The public tool runs the same Gherkin files with Cucumber.js. [T]
 | workbench server, event log, roles, metrics | done | planned |
 | change branch tooling, structural merge driver | done | planned |
 | operations and access readers | done for one hosting provider and one CI | planned as plugins |
-| executable scenarios | runner done; many scenarios still without tests | planned with Cucumber.js |
+| executable scenarios | runner done; many scenarios still without tests | planned with Cucumber |
 | translators | one | planned |
 | exports to LikeC4, Structurizr, CML | – | planned |
 | bounded contexts | – | deferred |
@@ -595,6 +620,7 @@ The public tool keeps the contracts: schemas, file layout, command line, workben
 
 ## 17. Influences
 
+- Addy Osmani for the term *comprehension debt*: the gap between how fast code is produced and how fast people understand it.
 - C4 model (Simon Brown) for the levels; Structurizr and LikeC4 as export targets.
 - Domain-Driven Design (Eric Evans) and Context Mapper for bounded contexts, still deferred.
 - Backstage catalog files for the idea of a manifest per repo with provides and consumes.
@@ -604,3 +630,4 @@ The public tool keeps the contracts: schemas, file layout, command line, workben
 - Gherkin and Cucumber for executable scenarios.
 - *Building Evolutionary Architectures* (Neal Ford, Rebecca Parsons, Patrick Kua): drift checks work like fitness functions.
 - *Design Rules* (Carliss Baldwin, Kim Clark): option value of modules; variants per change are cheap parallel experiments.
+- Vlad Khononov, *Balanced Coupling* (strength, distance, volatility): the next step is to check coupling in the code against the contracts on the map. His [modularity skill](https://github.com/vladikk/modularity) is a starting point; it is not part of this repository and has its own license.

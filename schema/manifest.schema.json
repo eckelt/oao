@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/eckelt/oao/schema/manifest.schema.json",
+  "title": "OAO manifest (one per repository)",
+  "description": "Draft for the public tool, see SPEC.md 5. A repository describes exactly one system with its containers and their interfaces. Edges, contracts, actors and external services are never declared here; they are derived or live in the landscape.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "system",
+    "containers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 4
+    },
+    "system": {
+      "$ref": "#/$defs/system"
+    },
+    "containers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/container"
+      }
+    },
+    "flows": {
+      "description": "Optional named sequences through existing edges (SPEC.md 5.4). A step without a matching edge is drift flow-broken.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/flow"
+      }
+    }
+  },
+  "$defs": {
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "summary": {
+      "description": "Exactly one line, at most 120 characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "contractRef": {
+      "description": "<owner>:<name>@<version>. The owner is the system or external service that owns the contract.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*:[a-z0-9][a-z0-9-]*@[0-9]+$"
+    },
+    "systemId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+    },
+    "nodeId": {
+      "description": "Node id as in the aggregate, e.g. shop/web or external/invoicing-service.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)*$"
+    },
+    "url": {
+      "description": "Public entry page this element serves to people. https only.",
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "specs": {
+      "description": "OpenSpec capability names, resolved to openspec/specs/<capability>/spec.md.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/localId"
+      }
+    },
+    "adrs": {
+      "description": "Paths of decision records (MADR) relative to the repository root, usually docs/adr/<id>.md.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[^/].*\\.md$"
+      }
+    },
+    "interface": {
+      "type": "object",
+      "required": [
+        "id",
+        "direction",
+        "contractRef",
+        "protocol"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "direction": {
+          "enum": [
+            "provides",
+            "consumes"
+          ]
+        },
+        "contractRef": {
+          "$ref": "#/$defs/contractRef"
+        },
+        "protocol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "relation": {
+          "description": "Only on consumes. Default calls.",
+          "enum": [
+            "calls",
+            "links-to",
+            "reads",
+            "writes",
+            "imports",
+            "deploys-to"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "direction": {
+            "const": "provides"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "relation"
+          ]
+        }
+      }
+    },
+    "system": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "summary",
+        "repository"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/systemId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "kind": {
+          "enum": [
+            "product",
+            "tool",
+            "library"
+          ]
+        },
+        "repository": {
+          "description": "<owner>/<repo>",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "specs": {
+          "$ref": "#/$defs/specs"
+        },
+        "adrs": {
+          "$ref": "#/$defs/adrs"
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "app",
+            "service",
+            "datastore",
+            "library",
+            "pipeline",
+            "daemon",
+            "firmware",
+            "plugin",
+            "hardware"
+          ]
+        },
+        "technology": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "specs": {
+          "$ref": "#/$defs/specs"
+        },
+        "adrs": {
+          "$ref": "#/$defs/adrs"
+        },
+        "interfaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/interface"
+          }
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "from",
+              "to",
+              "contractRef",
+              "text"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "$ref": "#/$defs/nodeId"
+              },
+              "to": {
+                "$ref": "#/$defs/nodeId"
+              },
+              "contractRef": {
+                "$ref": "#/$defs/contractRef"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "pattern": "^[^\\r\\n]+$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

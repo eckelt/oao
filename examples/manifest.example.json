@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 4,
+  "system": {
+    "id": "shop",
+    "name": "Shop",
+    "summary": "Lets customers order online.",
+    "repository": "example/shop",
+    "specs": [
+      "checkout",
+      "orders-api"
+    ],
+    "adrs": [
+      "docs/adr/2026-10-01-orders-as-events.md"
+    ]
+  },
+  "containers": [
+    {
+      "id": "web",
+      "name": "Storefront",
+      "kind": "app",
+      "technology": "TypeScript",
+      "summary": "Public pages where customers pick and order items.",
+      "url": "https://shop.example.com",
+      "specs": [
+        "checkout"
+      ],
+      "interfaces": [
+        {
+          "id": "site",
+          "direction": "provides",
+          "contractRef": "shop:site@1",
+          "protocol": "HTTPS HTML",
+          "summary": "Storefront"
+        },
+        {
+          "id": "api",
+          "direction": "consumes",
+          "contractRef": "shop:orders@1",
+          "protocol": "HTTPS JSON",
+          "summary": "Creates orders"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "name": "Orders API",
+      "kind": "service",
+      "technology": "TypeScript",
+      "summary": "Accepts orders and hands them to invoicing.",
+      "specs": [
+        "orders-api"
+      ],
+      "interfaces": [
+        {
+          "id": "orders",
+          "direction": "provides",
+          "contractRef": "shop:orders@1",
+          "protocol": "HTTPS JSON",
+          "summary": "POST order, GET status"
+        },
+        {
+          "id": "invoice",
+          "direction": "consumes",
+          "contractRef": "invoicing-service:api@2",
+          "protocol": "HTTPS JSON",
+          "summary": "Creates an invoice"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "order",
+      "name": "Place an order",
+      "steps": [
+        {
+          "from": "shop/web",
+          "to": "shop/api",
+          "contractRef": "shop:orders@1",
+          "text": "Storefront sends the order."
+        },
+        {
+          "from": "shop/api",
+          "to": "external/invoicing-service",
+          "contractRef": "invoicing-service:api@2",
+          "text": "API asks for an invoice."
+        }
+      ]
+    }
+  ]
+}
