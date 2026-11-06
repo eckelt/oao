@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/eckelt/oao/schema/landscape.schema.json",
+  "title": "OAO landscape (one per installation)",
+  "description": "Draft for the public tool, see SPEC.md 5. Registry of repositories plus what spans them: actors, external services, groups and capabilities. Actors only consume, external services only provide. Relationships are never declared.",
+  "type": "object",
+  "required": [
+    "system",
+    "owner",
+    "repos"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "system": {
+      "description": "Name of the landscape.",
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "description": "Role or team that owns the landscape.",
+      "type": "string",
+      "minLength": 1
+    },
+    "repos": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/repo"
+      }
+    },
+    "excluded": {
+      "description": "Repositories deliberately left out, with the reason in a comment.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "actors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/actor"
+      }
+    },
+    "externals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/external"
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "capabilities": {
+      "description": "Tree of business capabilities (SPEC.md 5.5).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/capability"
+      }
+    }
+  },
+  "$defs": {
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "summary": {
+      "description": "Exactly one line, at most 120 characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "contractRef": {
+      "description": "<owner>:<name>@<version>. The owner is the system or external service that owns the contract.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*:[a-z0-9][a-z0-9-]*@[0-9]+$"
+    },
+    "repo": {
+      "type": "object",
+      "required": [
+        "name",
+        "remote"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$"
+        },
+        "remote": {
+          "description": "<owner>/<repo>",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "branch": {
+          "description": "Default main.",
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "product",
+            "tool",
+            "library"
+          ]
+        },
+        "source": {
+          "description": "manifest (default) or translate:<name> for a repository with its own architecture format (SPEC.md 6.5).",
+          "type": "string",
+          "pattern": "^(manifest|translate:[a-z0-9][a-z0-9-]*)$"
+        },
+        "manifest": {
+          "description": "Path of the manifest relative to the repository root; with translate, the file the translator reads.",
+          "type": "string",
+          "pattern": "^[^/].*\\.json$"
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "summary",
+        "consumes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "consumes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "contractRef"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "contractRef": {
+                "$ref": "#/$defs/contractRef"
+              },
+              "relation": {
+                "enum": [
+                  "calls",
+                  "links-to",
+                  "reads",
+                  "writes"
+                ]
+              },
+              "summary": {
+                "$ref": "#/$defs/summary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "external": {
+      "description": "An external service. It only provides. Needs a consoleUrl or a docsUrl.",
+      "type": "object",
+      "required": [
+        "id",
+        "vendor",
+        "category",
+        "summary",
+        "provides"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vendor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "enum": [
+            "email",
+            "calendar",
+            "auth",
+            "hosting",
+            "vcs",
+            "llm",
+            "payments",
+            "platform",
+            "video-conferencing",
+            "cdn",
+            "other"
+          ]
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "consoleUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "docsUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "provides": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "contractRef",
+              "protocol"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/localId"
+              },
+              "contractRef": {
+                "$ref": "#/$defs/contractRef"
+              },
+              "protocol": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "$ref": "#/$defs/summary"
+              }
+            }
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "consoleUrl"
+          ]
+        },
+        {
+          "required": [
+            "docsUrl"
+          ]
+        }
+      ]
+    },
+    "group": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "summary",
+        "members"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "members": {
+          "description": "<system>, external/<id> or actor/<id>.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z0-9][a-z0-9.-]*|external/[a-z0-9][a-z0-9-]*|actor/[a-z0-9][a-z0-9-]*)$"
+          }
+        }
+      }
+    },
+    "capability": {
+      "description": "What the landscape lets someone do, phrased as a what, without system names. Only leaves carry specs, externals or planned.",
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "specs": {
+          "description": "<repo>:<capability>, i.e. openspec/specs/<capability>/spec.md in that repository.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]*:[a-z0-9][a-z0-9-]*$"
+          }
+        },
+        "externals": {
+          "description": "Ids of external services that carry this leaf instead of own specs.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/localId"
+          }
+        },
+        "planned": {
+          "description": "Why a gap is already noted, e.g. how it is done by hand today.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "^[^\\r\\n]+$"
+        },
+        "retiring": {
+          "description": "Why the capability is being phased out.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "^[^\\r\\n]+$"
+        },
+        "children": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/capability"
+          }
+        }
+      }
+    }
+  }
+}

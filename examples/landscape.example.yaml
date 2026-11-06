@@ -1,0 +1,46 @@
+# Example landscape for the shop in examples/manifest.example.json.
+system: Example landscape
+owner: platform team
+repos:
+  - name: shop
+    remote: example/shop
+    kind: product
+actors:
+  - id: customer
+    name: Customer
+    summary: Orders online and wants to know where the order is.
+    consumes:
+      - contractRef: shop:site@1
+externals:
+  - id: invoicing-service
+    name: Invoicing
+    vendor: Example Invoicing Inc.
+    category: payments
+    summary: Creates and sends invoices.
+    docsUrl: https://invoicing.example.com/docs
+    provides:
+      - id: api
+        contractRef: invoicing-service:api@2
+        protocol: HTTPS JSON
+groups:
+  - id: commerce
+    name: Commerce
+    summary: Everything a customer touches when ordering.
+    members: [shop, actor/customer, external/invoicing-service]
+capabilities:
+  - id: sell-online
+    name: Sell online
+    summary: Customers order without calling.
+    children:
+      - id: place-order
+        name: Place an order
+        summary: Pick items and order them.
+        specs: [shop:checkout, shop:orders-api]
+      - id: send-invoices
+        name: Send invoices
+        summary: Invoices go out by mail.
+        externals: [invoicing-service]
+      - id: track-returns
+        name: Track returns
+        summary: Follow up on returned items.
+        planned: Done by hand today; no system yet.
