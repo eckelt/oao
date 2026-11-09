@@ -47,4 +47,4 @@ Claude (Anthropic) compiled SPEC.md and SETUP.md on behalf of the author from th
 
 ## License
 
-The text of this repository is licensed under [CC BY 4.0](LICENSE). Code, once added, will get its own license.
+Copyright (c) 2026 Nils Eckelt. The text of this repository is licensed under [CC BY 4.0](LICENSE) (full legal code in `LICENSE`). Code, once added, will get its own license.
